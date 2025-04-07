@@ -13,20 +13,24 @@ import {
   AppStateService,
   APP_CONFIG,
   ConfigurationService,
-  createTranslateLoader,
+  // createTranslateLoader,
   PortalCoreModule,
   PortalMissingTranslationHandler,
   translateServiceInitializer,
   UserService,
   providePortalDialogService
 } from '@onecx/portal-integration-angular'
+import { StandaloneShellModule } from '@onecx/standalone-shell'
 import { environment } from 'src/environments/environment'
-import { AppRoutingModule } from './app-routing.module'
+import { AppRoutingModule, routes } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { metaReducers, reducers } from './app.reducers'
 
 import { Configuration } from './shared/generated'
 import { apiConfigProvider } from './shared/utils/apiConfigProvider.utils'
+import { RouterModule } from '@angular/router'
+import { addInitializeModuleGuard } from '@onecx/angular-integration-interface'
+import { TRANSLATION_PATH, createTranslateLoader, translationPathFactory } from '@onecx/angular-utils'
 
 export const commonImports = [CommonModule]
 
@@ -36,8 +40,9 @@ export const commonImports = [CommonModule]
     ...commonImports,
     BrowserModule,
     BrowserAnimationsModule,
-    AppRoutingModule,
-    LetDirective,
+    // AppRoutingModule,
+    RouterModule.forRoot(addInitializeModuleGuard(routes)),
+    // LetDirective,
     StoreRouterConnectingModule.forRoot(),
     StoreModule.forRoot(reducers, { metaReducers }),
     StoreDevtoolsModule.instrument({
@@ -48,35 +53,52 @@ export const commonImports = [CommonModule]
       traceLimit: 75
     }),
     EffectsModule.forRoot([]),
-    PortalCoreModule.forRoot('onecx-tenant-ui'),
+    PortalCoreModule.forMicroFrontend(),
+    // PortalCoreModule.forRoot('onecx-tenant-ui'),
+    // TranslateModule.forRoot({
+    //   extend: true,
+    //   loader: {
+    //     provide: TranslateLoader,
+    //     useFactory: createTranslateLoader,
+    //     deps: [HttpClient, AppStateService]
+    //   },
+    //   missingTranslationHandler: {
+    //     provide: MissingTranslationHandler,
+    //     useClass: PortalMissingTranslationHandler
+    //   }
+    // }),
     TranslateModule.forRoot({
-      extend: true,
+      isolate: false,
       loader: {
         provide: TranslateLoader,
         useFactory: createTranslateLoader,
-        deps: [HttpClient, AppStateService]
-      },
-      missingTranslationHandler: {
-        provide: MissingTranslationHandler,
-        useClass: PortalMissingTranslationHandler
+        deps: [HttpClient]
       }
-    })
+    }),
+    StandaloneShellModule
   ],
   providers: [
     providePortalDialogService(),
     { provide: APP_CONFIG, useValue: environment },
-    {
-      provide: APP_INITIALIZER,
-      useFactory: translateServiceInitializer,
-      multi: true,
-      deps: [UserService, TranslateService]
-    },
+    // {
+    //   provide: APP_INITIALIZER,
+    //   useFactory: translateServiceInitializer,
+    //   multi: true,
+    //   deps: [UserService, TranslateService]
+    // },
     {
       provide: Configuration,
       useFactory: apiConfigProvider,
       deps: [ConfigurationService, AppStateService]
     },
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient(withInterceptorsFromDi()),
+    {
+      provide: TRANSLATION_PATH,
+      // TODO: Replace the path passed to translationPathFactory with the location of the applications i18n files (e.g. de.json)
+      useFactory: (appStateService: AppStateService) => translationPathFactory('assets/i18n/')(appStateService),
+      multi: true,
+      deps: [AppStateService]
+    }
   ],
   bootstrap: [AppComponent]
 })
