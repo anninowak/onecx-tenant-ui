@@ -4,7 +4,7 @@
     "outDir": "./dist/out-tsc",
     "types": []
   },
-  "files": ["src/app/onecx-tenant-ui.remote.module.ts", "src/polyfills.ts", "src/main.ts"],
+  "files": ["src/app/onecx-tenant-ui.remote.module.ts", "src/polyfills.ts", "src/remote-main.ts", "src/main.ts"],
   "include": ["src/**/*.d.ts"],
   "exclude": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts"]
 }
