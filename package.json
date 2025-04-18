@@ -11,7 +11,7 @@
     "openapiOutput": "src/app/shared/generated"
   },
   "scripts": {
-    "build": "nx build --configuration=production",
+    "build": "nx build --configuration=production && cp dist/onecx-tenant-ui/styles.*.css dist/onecx-tenant-ui/styles.css",
     "check": "ng lint --cache=true && npx prettier -c --cache .",
     "clean": "npm cache clean --force && ng cache clean && rm -f .eslintcache && rm -f ./node_modules/.cache/prettier/.prettier-cache",
     "lint": "nx lint --cache=true",
