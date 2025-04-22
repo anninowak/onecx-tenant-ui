@@ -5,7 +5,7 @@ import { routerNavigatedAction } from '@ngrx/router-store'
 import { Action, Store } from '@ngrx/store'
 import { concatLatestFrom } from '@ngrx/operators'
 
-import { PortalMessageService } from '@onecx/portal-integration-angular'
+import { PortalDialogService, PortalMessageService } from '@onecx/portal-integration-angular'
 import {
   filterForNavigatedTo,
   filterOutOnlyQueryParamsChanged,
@@ -27,34 +27,43 @@ export class TenantSearchEffects {
     private readonly tenantService: TenantBffService,
     private readonly router: Router,
     private readonly store: Store,
-    private readonly messageService: PortalMessageService
+    private readonly messageService: PortalMessageService,
+    private readonly dialogService: PortalDialogService
   ) {}
 
   pageName = 'tenant'
 
-  syncParamsToUrl$ = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(TenantSearchActions.searchButtonClicked, TenantSearchActions.resetButtonClicked),
-        concatLatestFrom(() => [this.store.select(tenantSearchSelectors.selectCriteria), this.route.queryParams]),
-        tap(([, criteria, queryParams]) => {
-          const results = tenantSearchCriteriasSchema.safeParse(queryParams)
-          if (!results.success || !equal(criteria, results.data)) {
-            const params = {
-              ...criteria
+  syncParamsToUrl$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(TenantSearchActions.searchButtonClicked, TenantSearchActions.resetButtonClicked),
+      switchMap(() => {
+        return this.dialogService.openDialog('T', 'M', 'P', 'S').pipe(
+          switchMap((state) => {
+            if (state.button === 'primary') {
+              return of(TenantSearchActions.chartVisibilityToggled())
             }
-            this.router.navigate([], {
-              relativeTo: this.route,
-              queryParams: params,
-              replaceUrl: true,
-              onSameUrlNavigation: 'ignore'
-            })
-          }
-        })
-      )
-    },
-    { dispatch: false }
-  )
+
+            return of(TenantSearchActions.chartVisibilityRehydrated({ visible: true }))
+          })
+        )
+      })
+      // concatLatestFrom(() => [this.store.select(tenantSearchSelectors.selectCriteria), this.route.queryParams]),
+      // tap(([, criteria, queryParams]) => {
+      //   const results = tenantSearchCriteriasSchema.safeParse(queryParams)
+      //   if (!results.success || !equal(criteria, results.data)) {
+      //     const params = {
+      //       ...criteria
+      //     }
+      //     this.router.navigate([], {
+      //       relativeTo: this.route,
+      //       queryParams: params,
+      //       replaceUrl: true,
+      //       onSameUrlNavigation: 'ignore'
+      //     })
+      //   }
+      // })
+    )
+  })
 
   searchByUrl$ = createEffect(() => {
     return this.actions$.pipe(
@@ -95,18 +104,18 @@ export class TenantSearchEffects {
     )
   })
 
-  saveChartVisibility$ = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(TenantSearchActions.chartVisibilityToggled),
-        concatLatestFrom(() => this.store.select(tenantSearchSelectors.selectChartVisible)),
-        tap(([, chartVisible]) => {
-          localStorage.setItem('tenantChartVisibility', String(chartVisible))
-        })
-      )
-    },
-    { dispatch: false }
-  )
+  saveChartVisibility$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(TenantSearchActions.chartVisibilityToggled),
+      switchMap((a) => {
+        return this.dialogService.openDialog('T', 'M', 'P', 'S').pipe(
+          switchMap((dialogState) => {
+            return of(TenantSearchActions.tenantSearchResultsLoadingFailed({ error: 'aaa' }))
+          })
+        )
+      })
+    )
+  })
 
   errorMessages: { action: Action; key: string }[] = [
     {
